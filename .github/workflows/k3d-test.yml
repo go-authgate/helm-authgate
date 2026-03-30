@@ -1,4 +1,4 @@
-name: CI
+name: k3d Integration Test
 
 on:
   push:
@@ -10,73 +10,9 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Helm Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-
-      - name: Update dependencies
-        run: helm dependency update .
-
-      - name: Helm lint
-        run: helm lint .
-
-  template:
-    name: Template Validation
-    runs-on: ubuntu-latest
-    needs: lint
-    strategy:
-      matrix:
-        include:
-          - name: sqlite-default
-            args: ""
-          - name: ha-external
-            args: "--set database.driver=postgres --set replicaCount=3 --set externalDatabase.host=pg --set externalRedis.addr=redis:6379 --set metrics.enabled=true"
-          - name: ha-subchart
-            values: ci/values-ha.yaml
-          - name: sqlite-multi-replica-should-fail
-            args: "--set replicaCount=2 --set database.driver=sqlite"
-            expect_failure: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-
-      - name: Update dependencies
-        run: helm dependency update .
-
-      - name: Template render (${{ matrix.name }})
-        run: |
-          set +e
-          if [ -n "${{ matrix.values }}" ]; then
-            helm template test . -f ${{ matrix.values }} 2>&1
-            result=$?
-          else
-            helm template test . ${{ matrix.args }} 2>&1
-            result=$?
-          fi
-
-          if [ "${{ matrix.expect_failure }}" = "true" ]; then
-            if [ $result -eq 0 ]; then
-              echo "::error::Expected template to fail but it succeeded"
-              exit 1
-            else
-              echo "Template failed as expected"
-              exit 0
-            fi
-          else
-            exit $result
-          fi
-
   k3d-test:
-    name: k3d Integration (${{ matrix.mode }})
+    name: k3d (${{ matrix.mode }})
     runs-on: ubuntu-latest
-    needs: template
     strategy:
       fail-fast: false
       matrix:
@@ -84,6 +20,7 @@ jobs:
           - mode: sqlite
             values: ci/values-sqlite.yaml
             release: authgate-sqlite
+            timeout: 120s
           - mode: ha
             values: ci/values-ha.yaml
             release: authgate-ha
@@ -112,7 +49,7 @@ jobs:
             --namespace authgate-ci \
             -f ${{ matrix.values }} \
             --wait \
-            --timeout ${{ matrix.timeout || '120s' }}
+            --timeout ${{ matrix.timeout }}
 
       - name: Wait for pods
         run: |

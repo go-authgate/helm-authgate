@@ -1,0 +1,58 @@
+name: Template Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  template:
+    name: Template (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: sqlite-default
+            args: ""
+          - name: ha-external
+            args: "--set database.driver=postgres --set replicaCount=3 --set externalDatabase.host=pg --set externalRedis.addr=redis:6379 --set metrics.enabled=true"
+          - name: ha-subchart
+            values: ci/values-ha.yaml
+          - name: sqlite-multi-replica-should-fail
+            args: "--set replicaCount=2 --set database.driver=sqlite"
+            expect_failure: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Update dependencies
+        run: helm dependency update .
+
+      - name: Template render
+        run: |
+          set +e
+          if [ -n "${{ matrix.values }}" ]; then
+            helm template test . -f ${{ matrix.values }} 2>&1
+            result=$?
+          else
+            helm template test . ${{ matrix.args }} 2>&1
+            result=$?
+          fi
+
+          if [ "${{ matrix.expect_failure }}" = "true" ]; then
+            if [ $result -eq 0 ]; then
+              echo "::error::Expected template to fail but it succeeded"
+              exit 1
+            else
+              echo "Template failed as expected"
+              exit 0
+            fi
+          else
+            exit $result
+          fi
