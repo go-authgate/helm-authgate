@@ -1,0 +1,26 @@
+apiVersion: v2
+name: authgate
+description: A lightweight, production-ready OAuth 2.0 Authorization Server
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - oauth
+  - authorization-server
+  - device-flow
+  - pkce
+  - oidc
+home: https://github.com/go-authgate/authgate
+sources:
+  - https://github.com/go-authgate/authgate
+maintainers:
+  - name: AuthGate Team
+dependencies:
+  - name: postgresql
+    version: "16.x.x"
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: postgresql.enabled
+  - name: redis
+    version: "20.x.x"
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: redis.enabled

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "authgate.fullname" . }}-test-connection"
+  labels:
+    {{- include "authgate.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox:1.36
+      command: ['wget']
+      args: ['--no-verbose', '--tries=1', '--spider', '{{ include "authgate.fullname" . }}:{{ .Values.service.port }}/health']
+  restartPolicy: Never

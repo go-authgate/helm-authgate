@@ -1,0 +1,386 @@
+# -- Number of replicas. Must be 1 for SQLite mode.
+# For HA (PostgreSQL + Redis), use 2+.
+replicaCount: 1
+
+image:
+  repository: ghcr.io/go-authgate/authgate
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# ============================================================
+# Server Configuration
+# ============================================================
+server:
+  # -- Listening address (default: all interfaces on port 8080)
+  addr: ":8080"
+  # -- Public URL for OAuth redirects (REQUIRED)
+  # Example: https://auth.example.com
+  baseUrl: ""
+  # -- Environment mode: "production" or "development"
+  # production: session cookies require HTTPS, stricter security headers
+  environment: "production"
+
+# ============================================================
+# Database Configuration
+# ============================================================
+database:
+  # -- Driver: "sqlite" or "postgres"
+  driver: "sqlite"
+
+# -- Persistence for SQLite database (ignored when database.driver=postgres)
+persistence:
+  enabled: true
+  storageClass: ""
+  size: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  # -- Use an existing PVC
+  existingClaim: ""
+
+# -- Database connection pool settings
+dbPool:
+  maxOpenConns: 25
+  maxIdleConns: 10
+  connMaxLifetime: "5m"
+  connMaxIdleTime: "10m"
+
+# ============================================================
+# Secrets
+# ============================================================
+# Sensitive values stored in a Kubernetes Secret.
+# For production, use existingSecret with Vault/External Secrets Operator.
+secrets:
+  # -- Use an existing Secret instead of creating one.
+  # Must contain keys: JWT_SECRET, SESSION_SECRET, and optionally others.
+  existingSecret: ""
+  # -- JWT signing secret (REQUIRED for HS256). Generate: openssl rand -hex 32
+  jwtSecret: ""
+  # -- Session encryption secret (REQUIRED). Generate: openssl rand -hex 32
+  sessionSecret: ""
+  # -- Default admin password. If empty, random 16-char password generated on first run.
+  defaultAdminPassword: ""
+  # -- PostgreSQL DSN (when database.driver=postgres and not using postgresql subchart)
+  # Example: "host=db user=authgate password=secret dbname=authgate port=5432 sslmode=require"
+  databaseDsn: ""
+
+# ============================================================
+# External Database (when database.driver=postgres and postgresql.enabled=false)
+# ============================================================
+externalDatabase:
+  host: ""
+  port: 5432
+  user: "authgate"
+  password: ""
+  database: "authgate"
+  sslmode: "require"
+
+# ============================================================
+# PostgreSQL Subchart (bitnami/postgresql)
+# ============================================================
+# Enable for dev/test one-click deployment.
+# For production, use externalDatabase instead.
+postgresql:
+  enabled: false
+  auth:
+    database: authgate
+    username: authgate
+    password: ""
+    postgresPassword: ""
+
+# ============================================================
+# External Redis (when redis subchart is disabled)
+# ============================================================
+externalRedis:
+  addr: ""
+  password: ""
+  db: 0
+
+# ============================================================
+# Redis Subchart (bitnami/redis)
+# ============================================================
+# Enable for dev/test. For production, use externalRedis.
+redis:
+  enabled: false
+  architecture: standalone
+  auth:
+    enabled: false
+    password: ""
+
+# ============================================================
+# JWT Configuration
+# ============================================================
+jwt:
+  # -- Signing algorithm: HS256 (default), RS256, or ES256
+  signingAlgorithm: "HS256"
+  # -- Path to PEM private key (required for RS256/ES256)
+  privateKeyPath: ""
+  # -- Optional kid header value
+  keyId: ""
+  # -- Access token lifetime
+  expiration: "10h"
+  # -- Random jitter to prevent thundering herd
+  expirationJitter: "30m"
+
+# ============================================================
+# Session Configuration
+# ============================================================
+session:
+  maxAge: 3600
+  idleTimeout: 1800
+  fingerprint: true
+  fingerprintIP: false
+  rememberMeEnabled: true
+  rememberMeMaxAge: 2592000
+
+# ============================================================
+# Rate Limiting
+# ============================================================
+rateLimit:
+  enabled: true
+  # -- Store: "memory" (single instance) or "redis" (multi-pod)
+  store: "memory"
+  cleanupInterval: "5m"
+  login: 5
+  loginBurst: 2
+  deviceCode: 10
+  deviceCodeBurst: 3
+  token: 20
+  tokenBurst: 5
+  deviceVerify: 10
+  deviceVerifyBurst: 3
+  introspect: 20
+  introspectBurst: 5
+
+# ============================================================
+# Audit Logging
+# ============================================================
+audit:
+  enabled: true
+  retention: "2160h"
+  bufferSize: 1000
+  cleanupInterval: "24h"
+
+# ============================================================
+# Prometheus Metrics
+# ============================================================
+metrics:
+  enabled: false
+  # -- Bearer token for /metrics endpoint authentication
+  token: ""
+  gaugeUpdate:
+    enabled: true
+    interval: "5m"
+  cache:
+    type: "memory"
+    clientTTL: "30s"
+    sizePerConn: 32
+
+  # -- ServiceMonitor for Prometheus Operator
+  serviceMonitor:
+    enabled: false
+    namespace: ""
+    interval: "30s"
+    scrapeTimeout: "10s"
+    labels: {}
+    metricRelabelings: []
+    relabelings: []
+
+# -- Metrics leader strategy for multi-replica gauge updates.
+# "env-override": deploys a separate single-replica metrics-leader pod (recommended)
+# "disabled": all pods update gauges (use PromQL max() aggregation)
+metricsLeader:
+  strategy: "env-override"
+
+# ============================================================
+# Cache Configuration
+# ============================================================
+cache:
+  user:
+    type: "memory"
+    ttl: "5m"
+    clientTTL: "30s"
+    sizePerConn: 32
+  token:
+    enabled: false
+    type: "memory"
+    ttl: "10h"
+    clientTTL: "1h"
+    sizePerConn: 32
+  clientCount:
+    type: "memory"
+    ttl: "1h"
+    clientTTL: "10m"
+    sizePerConn: 32
+
+# ============================================================
+# Authentication
+# ============================================================
+auth:
+  # -- Mode: "local" or "http_api"
+  mode: "local"
+  httpApi:
+    url: ""
+    timeout: "10s"
+    insecureSkipVerify: false
+    authMode: "none"
+    authSecret: ""
+    authHeader: "X-API-Secret"
+    maxRetries: 3
+    retryDelay: "1s"
+    maxRetryDelay: "10s"
+
+# ============================================================
+# OAuth Providers
+# ============================================================
+oauth:
+  autoRegister: true
+  timeout: "15s"
+  insecureSkipVerify: false
+
+  github:
+    enabled: false
+    clientId: ""
+    clientSecret: ""
+    redirectUrl: ""
+    scopes: "user:email"
+
+  gitea:
+    enabled: false
+    url: ""
+    clientId: ""
+    clientSecret: ""
+    redirectUrl: ""
+    scopes: "read:user"
+
+  microsoft:
+    enabled: false
+    tenantId: "common"
+    clientId: ""
+    clientSecret: ""
+    redirectUrl: ""
+    scopes: "openid,profile,email,User.Read"
+
+  gitlab:
+    enabled: false
+    url: ""
+    clientId: ""
+    clientSecret: ""
+    redirectUrl: ""
+    scopes: "read_user"
+
+# ============================================================
+# Refresh Token
+# ============================================================
+refreshToken:
+  enabled: true
+  rotation: false
+  expiration: "720h"
+
+# ============================================================
+# Authorization Code Flow
+# ============================================================
+authCode:
+  expiration: "10m"
+  pkceRequired: false
+  consentRemember: true
+
+# ============================================================
+# Dynamic Client Registration (RFC 7591)
+# ============================================================
+dynamicClientRegistration:
+  enabled: false
+  rateLimit: 5
+  token: ""
+
+# ============================================================
+# Expired Token / Device Code Cleanup
+# ============================================================
+expiredTokenCleanup:
+  enabled: false
+  interval: "1h"
+
+# ============================================================
+# CORS
+# ============================================================
+cors:
+  enabled: false
+  allowedOrigins: []
+  allowedMethods: "GET,POST,PUT,DELETE,OPTIONS"
+  allowedHeaders: "Origin,Content-Type,Authorization"
+  maxAge: "12h"
+
+# ============================================================
+# Timeout Settings
+# ============================================================
+timeouts:
+  dbInit: "30s"
+  dbClose: "5s"
+  redisConn: "5s"
+  redisClose: "5s"
+  cacheInit: "5s"
+  cacheClose: "5s"
+  serverShutdown: "5s"
+  auditShutdown: "10s"
+
+# ============================================================
+# Kubernetes Resources
+# ============================================================
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  #  - host: auth.example.com
+  #    paths:
+  #      - path: /
+  #        pathType: Prefix
+  tls: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+podAnnotations: {}
+podLabels: {}
+
+# -- Extra environment variables (list of name/value or name/valueFrom)
+extraEnv: []
+
+# -- Extra volume mounts for the authgate container
+extraVolumeMounts: []
+
+# -- Extra volumes for the pod
+extraVolumes: []

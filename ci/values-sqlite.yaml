@@ -1,0 +1,19 @@
+# Minimal SQLite single-instance test values
+# Usage: helm install authgate-sqlite helm-authgate/ -f helm-authgate/ci/values-sqlite.yaml
+
+secrets:
+  jwtSecret: "test-jwt-secret-for-local-development-only-not-production"
+  sessionSecret: "test-session-secret-for-local-dev-only-not-production"
+  defaultAdminPassword: "admin123"
+
+server:
+  baseUrl: "http://localhost:8080"
+  environment: "development"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi

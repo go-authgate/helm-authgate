@@ -1,0 +1,59 @@
+# HA mode test values with PostgreSQL + Redis subchart
+# Usage: helm install authgate-ha helm-authgate/ -f helm-authgate/ci/values-ha.yaml
+
+replicaCount: 2
+
+database:
+  driver: postgres
+
+postgresql:
+  enabled: true
+  auth:
+    database: authgate
+    username: authgate
+    password: testpassword
+    postgresPassword: testpostgrespassword
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: testredispassword
+
+rateLimit:
+  store: redis
+
+cache:
+  user:
+    type: redis
+  token:
+    enabled: true
+    type: redis
+  clientCount:
+    type: redis
+
+metrics:
+  enabled: true
+  cache:
+    type: redis
+
+metricsLeader:
+  strategy: "env-override"
+
+secrets:
+  jwtSecret: "test-jwt-secret-for-local-development-only-not-production"
+  sessionSecret: "test-session-secret-for-local-dev-only-not-production"
+  defaultAdminPassword: "admin123"
+
+server:
+  baseUrl: "http://localhost:8080"
+  environment: "development"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi

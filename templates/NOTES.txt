@@ -1,0 +1,48 @@
+AuthGate has been deployed successfully!
+
+{{- if .Values.ingress.enabled }}
+
+Access AuthGate at:
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+
+{{- else if contains "NodePort" .Values.service.type }}
+
+Get the application URL by running:
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "authgate.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+
+{{- else if contains "LoadBalancer" .Values.service.type }}
+
+Get the application URL by running:
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+  kubectl get --namespace {{ .Release.Namespace }} svc {{ include "authgate.fullname" . }} -w
+
+{{- else }}
+
+Access AuthGate via port-forward:
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "authgate.fullname" . }} 8080:{{ .Values.service.port }}
+  echo "Visit http://localhost:8080"
+
+{{- end }}
+
+Verify health:
+  kubectl --namespace {{ .Release.Namespace }} exec deploy/{{ include "authgate.fullname" . }} -- wget -qO- http://localhost:8080/health
+
+{{- if eq .Values.database.driver "sqlite" }}
+
+NOTE: SQLite mode is active. This deployment is limited to a single replica.
+      For multi-replica HA, switch to database.driver=postgres.
+{{- end }}
+
+{{- if and (not .Values.secrets.jwtSecret) (not .Values.secrets.existingSecret) }}
+
+WARNING: JWT_SECRET is not set! Generate one with: openssl rand -hex 32
+{{- end }}
+
+{{- if and (not .Values.secrets.sessionSecret) (not .Values.secrets.existingSecret) }}
+
+WARNING: SESSION_SECRET is not set! Generate one with: openssl rand -hex 32
+{{- end }}

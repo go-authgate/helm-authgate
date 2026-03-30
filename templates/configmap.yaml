@@ -1,0 +1,184 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "authgate.configMapName" . }}
+  labels:
+    {{- include "authgate.labels" . | nindent 4 }}
+data:
+  # Server
+  SERVER_ADDR: {{ .Values.server.addr | quote }}
+  BASE_URL: {{ .Values.server.baseUrl | quote }}
+  ENVIRONMENT: {{ .Values.server.environment | quote }}
+
+  # Database
+  DATABASE_DRIVER: {{ .Values.database.driver | quote }}
+  {{- if eq .Values.database.driver "sqlite" }}
+  DATABASE_DSN: "/app/data/oauth.db"
+  {{- end }}
+
+  # Database Pool
+  DB_MAX_OPEN_CONNS: {{ .Values.dbPool.maxOpenConns | quote }}
+  DB_MAX_IDLE_CONNS: {{ .Values.dbPool.maxIdleConns | quote }}
+  DB_CONN_MAX_LIFETIME: {{ .Values.dbPool.connMaxLifetime | quote }}
+  DB_CONN_MAX_IDLE_TIME: {{ .Values.dbPool.connMaxIdleTime | quote }}
+
+  # JWT (non-sensitive)
+  JWT_SIGNING_ALGORITHM: {{ .Values.jwt.signingAlgorithm | quote }}
+  {{- if .Values.jwt.privateKeyPath }}
+  JWT_PRIVATE_KEY_PATH: {{ .Values.jwt.privateKeyPath | quote }}
+  {{- end }}
+  {{- if .Values.jwt.keyId }}
+  JWT_KEY_ID: {{ .Values.jwt.keyId | quote }}
+  {{- end }}
+  JWT_EXPIRATION: {{ .Values.jwt.expiration | quote }}
+  JWT_EXPIRATION_JITTER: {{ .Values.jwt.expirationJitter | quote }}
+
+  # Session
+  SESSION_MAX_AGE: {{ .Values.session.maxAge | quote }}
+  SESSION_IDLE_TIMEOUT: {{ .Values.session.idleTimeout | quote }}
+  SESSION_FINGERPRINT: {{ .Values.session.fingerprint | quote }}
+  SESSION_FINGERPRINT_IP: {{ .Values.session.fingerprintIP | quote }}
+  SESSION_REMEMBER_ME_ENABLED: {{ .Values.session.rememberMeEnabled | quote }}
+  SESSION_REMEMBER_ME_MAX_AGE: {{ .Values.session.rememberMeMaxAge | quote }}
+
+  # Authentication
+  AUTH_MODE: {{ .Values.auth.mode | quote }}
+  {{- if eq .Values.auth.mode "http_api" }}
+  HTTP_API_URL: {{ .Values.auth.httpApi.url | quote }}
+  HTTP_API_TIMEOUT: {{ .Values.auth.httpApi.timeout | quote }}
+  HTTP_API_INSECURE_SKIP_VERIFY: {{ .Values.auth.httpApi.insecureSkipVerify | quote }}
+  HTTP_API_AUTH_MODE: {{ .Values.auth.httpApi.authMode | quote }}
+  HTTP_API_AUTH_HEADER: {{ .Values.auth.httpApi.authHeader | quote }}
+  HTTP_API_MAX_RETRIES: {{ .Values.auth.httpApi.maxRetries | quote }}
+  HTTP_API_RETRY_DELAY: {{ .Values.auth.httpApi.retryDelay | quote }}
+  HTTP_API_MAX_RETRY_DELAY: {{ .Values.auth.httpApi.maxRetryDelay | quote }}
+  {{- end }}
+
+  # Rate Limiting
+  ENABLE_RATE_LIMIT: {{ .Values.rateLimit.enabled | quote }}
+  RATE_LIMIT_STORE: {{ .Values.rateLimit.store | quote }}
+  RATE_LIMIT_CLEANUP_INTERVAL: {{ .Values.rateLimit.cleanupInterval | quote }}
+  LOGIN_RATE_LIMIT: {{ .Values.rateLimit.login | quote }}
+  LOGIN_RATE_LIMIT_BURST: {{ .Values.rateLimit.loginBurst | quote }}
+  DEVICE_CODE_RATE_LIMIT: {{ .Values.rateLimit.deviceCode | quote }}
+  DEVICE_CODE_RATE_LIMIT_BURST: {{ .Values.rateLimit.deviceCodeBurst | quote }}
+  TOKEN_RATE_LIMIT: {{ .Values.rateLimit.token | quote }}
+  TOKEN_RATE_LIMIT_BURST: {{ .Values.rateLimit.tokenBurst | quote }}
+  DEVICE_VERIFY_RATE_LIMIT: {{ .Values.rateLimit.deviceVerify | quote }}
+  DEVICE_VERIFY_RATE_LIMIT_BURST: {{ .Values.rateLimit.deviceVerifyBurst | quote }}
+
+  # Redis
+  {{- if include "authgate.redisAvailable" . }}
+  REDIS_ADDR: {{ include "authgate.redisAddr" . | quote }}
+  REDIS_DB: {{ default "0" .Values.externalRedis.db | quote }}
+  {{- end }}
+
+  # Audit Logging
+  ENABLE_AUDIT_LOGGING: {{ .Values.audit.enabled | quote }}
+  AUDIT_LOG_RETENTION: {{ .Values.audit.retention | quote }}
+  AUDIT_LOG_BUFFER_SIZE: {{ .Values.audit.bufferSize | quote }}
+  AUDIT_LOG_CLEANUP_INTERVAL: {{ .Values.audit.cleanupInterval | quote }}
+
+  # Expired Token Cleanup
+  ENABLE_EXPIRED_TOKEN_CLEANUP: {{ .Values.expiredTokenCleanup.enabled | quote }}
+  EXPIRED_TOKEN_CLEANUP_INTERVAL: {{ .Values.expiredTokenCleanup.interval | quote }}
+
+  # Metrics
+  METRICS_ENABLED: {{ .Values.metrics.enabled | quote }}
+  {{- if and (gt (.Values.replicaCount | int) 1) (eq .Values.metricsLeader.strategy "env-override") }}
+  METRICS_GAUGE_UPDATE_ENABLED: "false"
+  {{- else }}
+  METRICS_GAUGE_UPDATE_ENABLED: {{ .Values.metrics.gaugeUpdate.enabled | quote }}
+  {{- end }}
+  METRICS_GAUGE_UPDATE_INTERVAL: {{ .Values.metrics.gaugeUpdate.interval | quote }}
+  METRICS_CACHE_TYPE: {{ .Values.metrics.cache.type | quote }}
+  METRICS_CACHE_CLIENT_TTL: {{ .Values.metrics.cache.clientTTL | quote }}
+  METRICS_CACHE_SIZE_PER_CONN: {{ .Values.metrics.cache.sizePerConn | quote }}
+
+  # User Cache
+  USER_CACHE_TYPE: {{ .Values.cache.user.type | quote }}
+  USER_CACHE_TTL: {{ .Values.cache.user.ttl | quote }}
+  USER_CACHE_CLIENT_TTL: {{ .Values.cache.user.clientTTL | quote }}
+  USER_CACHE_SIZE_PER_CONN: {{ .Values.cache.user.sizePerConn | quote }}
+
+  # Token Cache
+  TOKEN_CACHE_ENABLED: {{ .Values.cache.token.enabled | quote }}
+  TOKEN_CACHE_TYPE: {{ .Values.cache.token.type | quote }}
+  TOKEN_CACHE_TTL: {{ .Values.cache.token.ttl | quote }}
+  TOKEN_CACHE_CLIENT_TTL: {{ .Values.cache.token.clientTTL | quote }}
+  TOKEN_CACHE_SIZE_PER_CONN: {{ .Values.cache.token.sizePerConn | quote }}
+
+  # Client Count Cache
+  CLIENT_COUNT_CACHE_TYPE: {{ .Values.cache.clientCount.type | quote }}
+  CLIENT_COUNT_CACHE_TTL: {{ .Values.cache.clientCount.ttl | quote }}
+  CLIENT_COUNT_CACHE_CLIENT_TTL: {{ .Values.cache.clientCount.clientTTL | quote }}
+  CLIENT_COUNT_CACHE_SIZE_PER_CONN: {{ .Values.cache.clientCount.sizePerConn | quote }}
+
+  # OAuth Providers
+  OAUTH_AUTO_REGISTER: {{ .Values.oauth.autoRegister | quote }}
+  OAUTH_TIMEOUT: {{ .Values.oauth.timeout | quote }}
+  OAUTH_INSECURE_SKIP_VERIFY: {{ .Values.oauth.insecureSkipVerify | quote }}
+
+  GITHUB_OAUTH_ENABLED: {{ .Values.oauth.github.enabled | quote }}
+  {{- if .Values.oauth.github.enabled }}
+  GITHUB_CLIENT_ID: {{ .Values.oauth.github.clientId | quote }}
+  GITHUB_REDIRECT_URL: {{ .Values.oauth.github.redirectUrl | quote }}
+  GITHUB_SCOPES: {{ .Values.oauth.github.scopes | quote }}
+  {{- end }}
+
+  GITEA_OAUTH_ENABLED: {{ .Values.oauth.gitea.enabled | quote }}
+  {{- if .Values.oauth.gitea.enabled }}
+  GITEA_URL: {{ .Values.oauth.gitea.url | quote }}
+  GITEA_CLIENT_ID: {{ .Values.oauth.gitea.clientId | quote }}
+  GITEA_REDIRECT_URL: {{ .Values.oauth.gitea.redirectUrl | quote }}
+  GITEA_SCOPES: {{ .Values.oauth.gitea.scopes | quote }}
+  {{- end }}
+
+  MICROSOFT_OAUTH_ENABLED: {{ .Values.oauth.microsoft.enabled | quote }}
+  {{- if .Values.oauth.microsoft.enabled }}
+  MICROSOFT_TENANT_ID: {{ .Values.oauth.microsoft.tenantId | quote }}
+  MICROSOFT_CLIENT_ID: {{ .Values.oauth.microsoft.clientId | quote }}
+  MICROSOFT_REDIRECT_URL: {{ .Values.oauth.microsoft.redirectUrl | quote }}
+  MICROSOFT_SCOPES: {{ .Values.oauth.microsoft.scopes | quote }}
+  {{- end }}
+
+  GITLAB_OAUTH_ENABLED: {{ .Values.oauth.gitlab.enabled | quote }}
+  {{- if .Values.oauth.gitlab.enabled }}
+  GITLAB_URL: {{ .Values.oauth.gitlab.url | quote }}
+  GITLAB_CLIENT_ID: {{ .Values.oauth.gitlab.clientId | quote }}
+  GITLAB_REDIRECT_URL: {{ .Values.oauth.gitlab.redirectUrl | quote }}
+  GITLAB_SCOPES: {{ .Values.oauth.gitlab.scopes | quote }}
+  {{- end }}
+
+  # Refresh Token
+  ENABLE_REFRESH_TOKENS: {{ .Values.refreshToken.enabled | quote }}
+  ENABLE_TOKEN_ROTATION: {{ .Values.refreshToken.rotation | quote }}
+  REFRESH_TOKEN_EXPIRATION: {{ .Values.refreshToken.expiration | quote }}
+
+  # Authorization Code Flow
+  AUTH_CODE_EXPIRATION: {{ .Values.authCode.expiration | quote }}
+  PKCE_REQUIRED: {{ .Values.authCode.pkceRequired | quote }}
+  CONSENT_REMEMBER: {{ .Values.authCode.consentRemember | quote }}
+
+  # Dynamic Client Registration
+  ENABLE_DYNAMIC_CLIENT_REGISTRATION: {{ .Values.dynamicClientRegistration.enabled | quote }}
+  DYNAMIC_CLIENT_REGISTRATION_RATE_LIMIT: {{ .Values.dynamicClientRegistration.rateLimit | quote }}
+
+  # CORS
+  CORS_ENABLED: {{ .Values.cors.enabled | quote }}
+  {{- if .Values.cors.enabled }}
+  CORS_ALLOWED_ORIGINS: {{ .Values.cors.allowedOrigins | join "," | quote }}
+  CORS_ALLOWED_METHODS: {{ .Values.cors.allowedMethods | quote }}
+  CORS_ALLOWED_HEADERS: {{ .Values.cors.allowedHeaders | quote }}
+  CORS_MAX_AGE: {{ .Values.cors.maxAge | quote }}
+  {{- end }}
+
+  # Timeouts
+  DB_INIT_TIMEOUT: {{ .Values.timeouts.dbInit | quote }}
+  DB_CLOSE_TIMEOUT: {{ .Values.timeouts.dbClose | quote }}
+  REDIS_CONN_TIMEOUT: {{ .Values.timeouts.redisConn | quote }}
+  REDIS_CLOSE_TIMEOUT: {{ .Values.timeouts.redisClose | quote }}
+  CACHE_INIT_TIMEOUT: {{ .Values.timeouts.cacheInit | quote }}
+  CACHE_CLOSE_TIMEOUT: {{ .Values.timeouts.cacheClose | quote }}
+  SERVER_SHUTDOWN_TIMEOUT: {{ .Values.timeouts.serverShutdown | quote }}
+  AUDIT_SHUTDOWN_TIMEOUT: {{ .Values.timeouts.auditShutdown | quote }}
