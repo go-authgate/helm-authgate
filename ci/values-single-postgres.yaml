@@ -23,6 +23,9 @@ server:
   baseUrl: "http://localhost:8080"
   environment: "development"
 
+timeouts:
+  dbInit: "120s"
+
 resources:
   requests:
     cpu: 50m
