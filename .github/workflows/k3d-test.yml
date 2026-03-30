@@ -32,32 +32,12 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
 
-      - name: Checkout authgate source
-        uses: actions/checkout@v4
-        with:
-          repository: go-authgate/authgate
-          path: authgate-src
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: authgate-src/go.mod
-          check-latest: true
-
-      - name: Build authgate binary
-        working-directory: authgate-src
-        run: make build_linux_amd64
-
       - name: Get app version
         id: version
         run: echo "APP_VERSION=$(grep appVersion Chart.yaml | awk '{print $2}' | tr -d '\"')" >> "$GITHUB_OUTPUT"
 
-      - name: Build Docker image
-        run: |
-          docker build \
-            -f authgate-src/docker/Dockerfile \
-            -t ghcr.io/go-authgate/authgate:${{ steps.version.outputs.APP_VERSION }} \
-            authgate-src
+      - name: Pull authgate image
+        run: docker pull ghcr.io/go-authgate/authgate:${{ steps.version.outputs.APP_VERSION }}
 
       - name: Create k3d cluster
         uses: AbsaOSS/k3d-action@v2
