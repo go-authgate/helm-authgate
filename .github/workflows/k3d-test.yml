@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   k3d-test:
@@ -31,6 +32,29 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
 
+      - name: Checkout authgate source
+        uses: actions/checkout@v4
+        with:
+          repository: go-authgate/authgate
+          path: authgate-src
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: authgate-src/go.mod
+          check-latest: true
+
+      - name: Build authgate binary
+        working-directory: authgate-src
+        run: make build_linux_amd64
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -f authgate-src/docker/Dockerfile \
+            -t ghcr.io/go-authgate/authgate:${{ fromJSON('"' }}$(grep appVersion Chart.yaml | awk '{print $2}' | tr -d '"')${{ fromJSON('"') }} \
+            authgate-src
+
       - name: Create k3d cluster
         uses: AbsaOSS/k3d-action@v2
         with:
@@ -38,6 +62,11 @@ jobs:
           args: >-
             -p "8080:80@loadbalancer"
             --wait
+
+      - name: Import image into k3d
+        run: |
+          APP_VERSION=$(grep appVersion Chart.yaml | awk '{print $2}' | tr -d '"')
+          k3d image import ghcr.io/go-authgate/authgate:${APP_VERSION} -c authgate-ci
 
       - name: Update dependencies
         run: helm dependency update .
@@ -48,6 +77,7 @@ jobs:
           helm install ${{ matrix.release }} . \
             --namespace authgate-ci \
             -f ${{ matrix.values }} \
+            --set image.pullPolicy=IfNotPresent \
             --wait \
             --timeout ${{ matrix.timeout }}
 
@@ -75,10 +105,12 @@ jobs:
         run: |
           echo "=== Pods ==="
           kubectl get pods --namespace authgate-ci -o wide
+          echo "=== Describe failing pods ==="
+          kubectl describe pods --namespace authgate-ci -l app.kubernetes.io/name=authgate
           echo "=== Events ==="
           kubectl get events --namespace authgate-ci --sort-by='.lastTimestamp'
           echo "=== Logs ==="
-          kubectl logs --namespace authgate-ci -l app.kubernetes.io/name=authgate --tail=50 || true
+          kubectl logs --namespace authgate-ci -l app.kubernetes.io/name=authgate --tail=100 || true
 
       - name: Uninstall
         if: always()
