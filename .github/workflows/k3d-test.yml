@@ -21,11 +21,11 @@ jobs:
           - mode: single-postgres
             values: ci/values-single-postgres.yaml
             release: authgate-single
-            timeout: 600s
+            timeout: 180s
           - mode: ha
             values: ci/values-ha.yaml
             release: authgate-ha
-            timeout: 600s
+            timeout: 300s
     steps:
       - uses: actions/checkout@v4
 
