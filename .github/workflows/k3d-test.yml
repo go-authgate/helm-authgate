@@ -57,25 +57,21 @@ jobs:
       - name: Import image into k3d
         run: k3d image import ghcr.io/go-authgate/authgate:${{ steps.version.outputs.APP_VERSION }} -c authgate-ci
 
+      - name: Wait for cluster ready
+        run: kubectl wait --for=condition=Ready nodes --all --timeout=120s
+
       - name: Update dependencies
         run: helm dependency update .
 
       - name: Install (${{ matrix.mode }})
         run: |
-          kubectl create namespace authgate-ci
           helm install ${{ matrix.release }} . \
+            --create-namespace \
             --namespace authgate-ci \
             -f ${{ matrix.values }} \
             --set image.pullPolicy=IfNotPresent \
             --wait \
             --timeout ${{ matrix.timeout }}
-
-      - name: Wait for pods
-        run: |
-          kubectl wait --namespace authgate-ci \
-            --for=condition=ready pod \
-            -l app.kubernetes.io/name=authgate \
-            --timeout=180s
 
       - name: Health check
         run: |
@@ -96,10 +92,14 @@ jobs:
           kubectl get pods --namespace authgate-ci -o wide
           echo "=== Describe failing pods ==="
           kubectl describe pods --namespace authgate-ci -l app.kubernetes.io/name=authgate
+          echo "=== Describe PostgreSQL pods ==="
+          kubectl describe pods --namespace authgate-ci -l app.kubernetes.io/name=postgresql || true
           echo "=== Events ==="
           kubectl get events --namespace authgate-ci --sort-by='.lastTimestamp'
-          echo "=== Logs ==="
+          echo "=== AuthGate Logs ==="
           kubectl logs --namespace authgate-ci -l app.kubernetes.io/name=authgate --tail=100 || true
+          echo "=== PostgreSQL Logs ==="
+          kubectl logs --namespace authgate-ci -l app.kubernetes.io/name=postgresql --tail=50 || true
 
       - name: Uninstall
         if: always()
