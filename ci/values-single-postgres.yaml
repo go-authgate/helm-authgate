@@ -1,0 +1,32 @@
+# Single-instance with PostgreSQL subchart (CGO_ENABLED=0 image doesn't support SQLite)
+# Usage: helm install authgate-single helm-authgate/ -f helm-authgate/ci/values-single-postgres.yaml
+
+replicaCount: 1
+
+database:
+  driver: postgres
+
+postgresql:
+  enabled: true
+  auth:
+    database: authgate
+    username: authgate
+    password: testpassword
+    postgresPassword: testpostgrespassword
+
+secrets:
+  jwtSecret: "test-jwt-secret-for-local-development-only-not-production"
+  sessionSecret: "test-session-secret-for-local-dev-only-not-production"
+  defaultAdminPassword: "admin123"
+
+server:
+  baseUrl: "http://localhost:8080"
+  environment: "development"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi

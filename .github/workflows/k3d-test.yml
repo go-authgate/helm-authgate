@@ -18,10 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - mode: sqlite
-            values: ci/values-sqlite.yaml
-            release: authgate-sqlite
-            timeout: 120s
+          - mode: single-postgres
+            values: ci/values-single-postgres.yaml
+            release: authgate-single
+            timeout: 180s
           - mode: ha
             values: ci/values-ha.yaml
             release: authgate-ha
