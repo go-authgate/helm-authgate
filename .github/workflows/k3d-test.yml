@@ -52,13 +52,17 @@ jobs:
           cluster-name: authgate-ci
           args: >-
             -p "8080:80@loadbalancer"
+            --k3s-arg "--disable=metrics-server@server:0"
             --wait
+
+      - name: Wait for cluster ready
+        run: |
+          kubectl wait --for=condition=Ready nodes --all --timeout=120s
+          kubectl wait --for=condition=Available deployment/coredns -n kube-system --timeout=120s
+          kubectl cluster-info
 
       - name: Import image into k3d
         run: k3d image import ghcr.io/go-authgate/authgate:${{ steps.version.outputs.APP_VERSION }} -c authgate-ci
-
-      - name: Wait for cluster ready
-        run: kubectl wait --for=condition=Ready nodes --all --timeout=120s
 
       - name: Update dependencies
         run: helm dependency update .
