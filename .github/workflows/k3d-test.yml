@@ -48,11 +48,15 @@ jobs:
         working-directory: authgate-src
         run: make build_linux_amd64
 
+      - name: Get app version
+        id: version
+        run: echo "APP_VERSION=$(grep appVersion Chart.yaml | awk '{print $2}' | tr -d '\"')" >> "$GITHUB_OUTPUT"
+
       - name: Build Docker image
         run: |
           docker build \
             -f authgate-src/docker/Dockerfile \
-            -t ghcr.io/go-authgate/authgate:${{ fromJSON('"' }}$(grep appVersion Chart.yaml | awk '{print $2}' | tr -d '"')${{ fromJSON('"') }} \
+            -t ghcr.io/go-authgate/authgate:${{ steps.version.outputs.APP_VERSION }} \
             authgate-src
 
       - name: Create k3d cluster
@@ -64,9 +68,7 @@ jobs:
             --wait
 
       - name: Import image into k3d
-        run: |
-          APP_VERSION=$(grep appVersion Chart.yaml | awk '{print $2}' | tr -d '"')
-          k3d image import ghcr.io/go-authgate/authgate:${APP_VERSION} -c authgate-ci
+        run: k3d image import ghcr.io/go-authgate/authgate:${{ steps.version.outputs.APP_VERSION }} -c authgate-ci
 
       - name: Update dependencies
         run: helm dependency update .
