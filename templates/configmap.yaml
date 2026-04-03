@@ -21,6 +21,7 @@ data:
   DB_MAX_IDLE_CONNS: {{ .Values.dbPool.maxIdleConns | quote }}
   DB_CONN_MAX_LIFETIME: {{ .Values.dbPool.connMaxLifetime | quote }}
   DB_CONN_MAX_IDLE_TIME: {{ .Values.dbPool.connMaxIdleTime | quote }}
+  DB_LOG_LEVEL: {{ .Values.dbPool.logLevel | quote }}
 
   # JWT (non-sensitive)
   JWT_SIGNING_ALGORITHM: {{ .Values.jwt.signingAlgorithm | quote }}
@@ -59,15 +60,10 @@ data:
   RATE_LIMIT_STORE: {{ .Values.rateLimit.store | quote }}
   RATE_LIMIT_CLEANUP_INTERVAL: {{ .Values.rateLimit.cleanupInterval | quote }}
   LOGIN_RATE_LIMIT: {{ .Values.rateLimit.login | quote }}
-  LOGIN_RATE_LIMIT_BURST: {{ .Values.rateLimit.loginBurst | quote }}
   DEVICE_CODE_RATE_LIMIT: {{ .Values.rateLimit.deviceCode | quote }}
-  DEVICE_CODE_RATE_LIMIT_BURST: {{ .Values.rateLimit.deviceCodeBurst | quote }}
   TOKEN_RATE_LIMIT: {{ .Values.rateLimit.token | quote }}
-  TOKEN_RATE_LIMIT_BURST: {{ .Values.rateLimit.tokenBurst | quote }}
   DEVICE_VERIFY_RATE_LIMIT: {{ .Values.rateLimit.deviceVerify | quote }}
-  DEVICE_VERIFY_RATE_LIMIT_BURST: {{ .Values.rateLimit.deviceVerifyBurst | quote }}
   INTROSPECT_RATE_LIMIT: {{ .Values.rateLimit.introspect | quote }}
-  INTROSPECT_RATE_LIMIT_BURST: {{ .Values.rateLimit.introspectBurst | quote }}
 
   # Redis
   {{- if include "authgate.redisAvailable" . }}
@@ -157,6 +153,9 @@ data:
   ENABLE_TOKEN_ROTATION: {{ .Values.refreshToken.rotation | quote }}
   REFRESH_TOKEN_EXPIRATION: {{ .Values.refreshToken.expiration | quote }}
 
+  # Client Credentials Flow
+  CLIENT_CREDENTIALS_TOKEN_EXPIRATION: {{ .Values.clientCredentials.tokenExpiration | quote }}
+
   # Authorization Code Flow
   AUTH_CODE_EXPIRATION: {{ .Values.authCode.expiration | quote }}
   PKCE_REQUIRED: {{ .Values.authCode.pkceRequired | quote }}
@@ -165,6 +164,9 @@ data:
   # Dynamic Client Registration
   ENABLE_DYNAMIC_CLIENT_REGISTRATION: {{ .Values.dynamicClientRegistration.enabled | quote }}
   DYNAMIC_CLIENT_REGISTRATION_RATE_LIMIT: {{ .Values.dynamicClientRegistration.rateLimit | quote }}
+
+  # Static File Caching
+  STATIC_CACHE_MAX_AGE: {{ .Values.staticCache.maxAge | quote }}
 
   # CORS
   CORS_ENABLED: {{ .Values.cors.enabled | quote }}

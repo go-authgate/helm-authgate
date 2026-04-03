@@ -48,6 +48,8 @@ dbPool:
   maxIdleConns: 10
   connMaxLifetime: "5m"
   connMaxIdleTime: "10m"
+  # -- GORM log level: "silent", "error", "warn", "info"
+  logLevel: "warn"
 
 # ============================================================
 # Secrets
@@ -146,15 +148,10 @@ rateLimit:
   store: "memory"
   cleanupInterval: "5m"
   login: 5
-  loginBurst: 2
   deviceCode: 10
-  deviceCodeBurst: 3
   token: 20
-  tokenBurst: 5
   deviceVerify: 10
-  deviceVerifyBurst: 3
   introspect: 20
-  introspectBurst: 5
 
 # ============================================================
 # Audit Logging
@@ -282,6 +279,13 @@ refreshToken:
   expiration: "720h"
 
 # ============================================================
+# Client Credentials Flow (RFC 6749 §4.4)
+# ============================================================
+clientCredentials:
+  # -- Access token lifetime for client_credentials grant
+  tokenExpiration: "1h"
+
+# ============================================================
 # Authorization Code Flow
 # ============================================================
 authCode:
@@ -303,6 +307,13 @@ dynamicClientRegistration:
 expiredTokenCleanup:
   enabled: false
   interval: "1h"
+
+# ============================================================
+# Static File Caching
+# ============================================================
+staticCache:
+  # -- Cache-Control max-age for non-hashed static files (0 disables)
+  maxAge: "24h"
 
 # ============================================================
 # CORS
