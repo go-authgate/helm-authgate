@@ -50,57 +50,57 @@ All configuration is done through `values.yaml`. Key sections:
 
 ### Core Settings
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `replicaCount` | Number of replicas (must be 1 for SQLite) | `1` |
-| `image.repository` | Container image | `ghcr.io/go-authgate/authgate` |
-| `image.tag` | Image tag (defaults to chart appVersion) | `""` |
-| `server.baseUrl` | Public URL for OAuth redirects (**required**) | `""` |
-| `server.environment` | `production` or `development` | `"production"` |
+| Parameter            | Description                                   | Default                        |
+| -------------------- | --------------------------------------------- | ------------------------------ |
+| `replicaCount`       | Number of replicas (must be 1 for SQLite)     | `1`                            |
+| `image.repository`   | Container image                               | `ghcr.io/go-authgate/authgate` |
+| `image.tag`          | Image tag (defaults to chart appVersion)      | `""`                           |
+| `server.baseUrl`     | Public URL for OAuth redirects (**required**) | `""`                           |
+| `server.environment` | `production` or `development`                 | `"production"`                 |
 
 ### Database
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `database.driver` | `sqlite` or `postgres` | `"sqlite"` |
-| `persistence.enabled` | Enable PVC for SQLite | `true` |
-| `persistence.size` | PVC size | `1Gi` |
-| `externalDatabase.host` | External PostgreSQL host | `""` |
-| `postgresql.enabled` | Deploy PostgreSQL subchart | `false` |
+| Parameter               | Description                | Default    |
+| ----------------------- | -------------------------- | ---------- |
+| `database.driver`       | `sqlite` or `postgres`     | `"sqlite"` |
+| `persistence.enabled`   | Enable PVC for SQLite      | `true`     |
+| `persistence.size`      | PVC size                   | `1Gi`      |
+| `externalDatabase.host` | External PostgreSQL host   | `""`       |
+| `postgresql.enabled`    | Deploy PostgreSQL subchart | `false`    |
 
 ### Secrets
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `secrets.existingSecret` | Use pre-created Secret | `""` |
-| `secrets.jwtSecret` | JWT signing secret (**required** for HS256) | `""` |
-| `secrets.sessionSecret` | Session encryption secret (**required**) | `""` |
-| `secrets.defaultAdminPassword` | Admin password (random if empty) | `""` |
+| Parameter                      | Description                                 | Default |
+| ------------------------------ | ------------------------------------------- | ------- |
+| `secrets.existingSecret`       | Use pre-created Secret                      | `""`    |
+| `secrets.jwtSecret`            | JWT signing secret (**required** for HS256) | `""`    |
+| `secrets.sessionSecret`        | Session encryption secret (**required**)    | `""`    |
+| `secrets.defaultAdminPassword` | Admin password (random if empty)            | `""`    |
 
 ### Redis
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `redis.enabled` | Deploy Redis subchart | `false` |
-| `externalRedis.addr` | External Redis address | `""` |
-| `rateLimit.store` | `memory` or `redis` | `"memory"` |
+| Parameter            | Description            | Default    |
+| -------------------- | ---------------------- | ---------- |
+| `redis.enabled`      | Deploy Redis subchart  | `false`    |
+| `externalRedis.addr` | External Redis address | `""`       |
+| `rateLimit.store`    | `memory` or `redis`    | `"memory"` |
 
 ### Metrics & Monitoring
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `metrics.enabled` | Enable Prometheus /metrics endpoint | `false` |
-| `metrics.serviceMonitor.enabled` | Create ServiceMonitor | `false` |
-| `metricsLeader.strategy` | Multi-replica gauge strategy | `"env-override"` |
+| Parameter                        | Description                         | Default          |
+| -------------------------------- | ----------------------------------- | ---------------- |
+| `metrics.enabled`                | Enable Prometheus /metrics endpoint | `false`          |
+| `metrics.serviceMonitor.enabled` | Create ServiceMonitor               | `false`          |
+| `metricsLeader.strategy`         | Multi-replica gauge strategy        | `"env-override"` |
 
 ### Ingress
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `ingress.enabled` | Enable Ingress | `false` |
-| `ingress.className` | Ingress class name | `""` |
-| `ingress.hosts` | List of hosts and paths | `[]` |
-| `ingress.tls` | TLS configuration | `[]` |
+| Parameter           | Description             | Default |
+| ------------------- | ----------------------- | ------- |
+| `ingress.enabled`   | Enable Ingress          | `false` |
+| `ingress.className` | Ingress class name      | `""`    |
+| `ingress.hosts`     | List of hosts and paths | `[]`    |
+| `ingress.tls`       | TLS configuration       | `[]`    |
 
 For the complete list of parameters, see [`values.yaml`](values.yaml).
 
@@ -224,13 +224,42 @@ secrets:
 
 The Secret must contain these keys:
 
-| Key | Required | Description |
-|-----|----------|-------------|
-| `JWT_SECRET` | Yes | JWT signing secret |
-| `SESSION_SECRET` | Yes | Session encryption secret |
-| `DATABASE_DSN` | When using postgres | PostgreSQL connection string |
-| `REDIS_PASSWORD` | When using external Redis | Redis password |
-| `DEFAULT_ADMIN_PASSWORD` | No | Admin user password |
+| Key                      | Required                  | Description                  |
+| ------------------------ | ------------------------- | ---------------------------- |
+| `JWT_SECRET`             | Yes                       | JWT signing secret           |
+| `SESSION_SECRET`         | Yes                       | Session encryption secret    |
+| `DATABASE_DSN`           | When using postgres       | PostgreSQL connection string |
+| `REDIS_PASSWORD`         | When using external Redis | Redis password               |
+| `DEFAULT_ADMIN_PASSWORD` | No                        | Admin user password          |
+
+## Testing Locally with colima (macOS)
+
+[Colima](https://github.com/abiosoft/colima) provides a lightweight local Kubernetes environment using k3s on macOS:
+
+```bash
+# Start a k3s cluster (2 CPU, 4GB RAM, 60GB disk)
+colima start --kubernetes --cpu 2 --memory 4 --disk 60
+
+# Verify
+kubectl get nodes
+
+# Install (single-instance with PostgreSQL subchart)
+helm dependency update .
+helm install authgate . -f ci/values-single-postgres.yaml \
+  --namespace authgate --create-namespace --wait
+
+# Health check
+kubectl -n authgate exec deploy/authgate -- wget -qO- http://localhost:8080/health
+
+# Access via port-forward
+kubectl -n authgate port-forward svc/authgate 8088:80                    # AuthGate:    http://localhost:8088
+kubectl -n authgate port-forward svc/authgate-postgresql 5433:5432       # PostgreSQL:  localhost:5433
+kubectl -n authgate port-forward svc/authgate-ha-redis-master 6380:6379  # Redis:       localhost:6380 (HA mode only)
+
+# Clean up
+helm uninstall authgate -n authgate
+colima stop
+```
 
 ## Testing Locally with k3d
 
