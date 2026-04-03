@@ -67,6 +67,9 @@ spec:
                   name: {{ .Release.Name }}-redis
                   key: redis-password
             {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /health

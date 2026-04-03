@@ -134,7 +134,7 @@ helm install authgate . -f values-sqlite.yaml
 For production multi-replica deployments with external databases:
 
 ```yaml
-# values-ha-external.yaml
+# Example: HA with external databases
 replicaCount: 3
 database:
   driver: postgres
@@ -183,7 +183,7 @@ helm install authgate . -f values-ha-external.yaml
 One-click setup with bundled PostgreSQL and Redis:
 
 ```yaml
-# values-ha-subchart.yaml
+# Example: HA with bundled subcharts
 replicaCount: 2
 database:
   driver: postgres

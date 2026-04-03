@@ -66,6 +66,8 @@ data:
   TOKEN_RATE_LIMIT_BURST: {{ .Values.rateLimit.tokenBurst | quote }}
   DEVICE_VERIFY_RATE_LIMIT: {{ .Values.rateLimit.deviceVerify | quote }}
   DEVICE_VERIFY_RATE_LIMIT_BURST: {{ .Values.rateLimit.deviceVerifyBurst | quote }}
+  INTROSPECT_RATE_LIMIT: {{ .Values.rateLimit.introspect | quote }}
+  INTROSPECT_RATE_LIMIT_BURST: {{ .Values.rateLimit.introspectBurst | quote }}
 
   # Redis
   {{- if include "authgate.redisAvailable" . }}
