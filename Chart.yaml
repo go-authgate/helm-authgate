@@ -1,6 +1,6 @@
 apiVersion: v2
 name: authgate
-description: A lightweight, production-ready OAuth 2.0 Authorization Server
+description: A lightweight, production-ready OAuth 2.0 / OpenID Connect Authorization Server with PKCE and Device Flow support
 type: application
 version: 0.1.0
 appVersion: "0.24.0"
