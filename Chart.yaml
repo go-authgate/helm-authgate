@@ -6,10 +6,18 @@ version: 0.1.0
 appVersion: "0.24.0"
 keywords:
   - oauth
+  - oauth2
   - authorization-server
-  - device-flow
-  - pkce
   - oidc
+  - openid-connect
+  - pkce
+  - device-flow
+  - jwt
+  - token
+  - authentication
+  - identity
+  - sso
+  - api-security
 home: https://github.com/go-authgate/authgate
 sources:
   - https://github.com/go-authgate/authgate
