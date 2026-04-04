@@ -2,10 +2,8 @@ name: Release Helm Chart (OCI)
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - "Chart.yaml"
+    tags:
+      - "v*"
 
 permissions:
   contents: read
@@ -18,14 +16,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Get version from tag
+        id: tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Verify Chart.yaml version matches tag
+        run: |
+          chart_version=$(grep '^version:' Chart.yaml | awk '{print $2}')
+          tag_version="${{ steps.tag.outputs.version }}"
+          if [ "$chart_version" != "$tag_version" ]; then
+            echo "::error::Chart.yaml version ($chart_version) does not match tag (v$tag_version)"
+            exit 1
+          fi
+
       - name: Install Helm
         uses: azure/setup-helm@v5
-
-      - name: Get chart version
-        id: chart
-        run: |
-          version=$(grep '^version:' Chart.yaml | awk '{print $2}')
-          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Login to GHCR
         run: |
@@ -40,5 +47,5 @@ jobs:
 
       - name: Push to GHCR
         run: |
-          helm push authgate-${{ steps.chart.outputs.version }}.tgz \
+          helm push authgate-${{ steps.tag.outputs.version }}.tgz \
             oci://ghcr.io/${{ github.repository }}
