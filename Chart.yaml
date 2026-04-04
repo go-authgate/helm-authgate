@@ -18,11 +18,14 @@ keywords:
   - identity
   - sso
   - api-security
-home: https://github.com/go-authgate/authgate
+home: https://github.com/go-authgate/helm-authgate
+icon: https://avatars.githubusercontent.com/u/262696724?v=4
 sources:
+  - https://github.com/go-authgate/helm-authgate
   - https://github.com/go-authgate/authgate
 maintainers:
   - name: AuthGate Team
+    url: https://github.com/go-authgate
 dependencies:
   - name: postgresql
     version: "18.5.15"
