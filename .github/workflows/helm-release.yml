@@ -41,4 +41,4 @@ jobs:
       - name: Push to GHCR
         run: |
           helm push authgate-${{ steps.chart.outputs.version }}.tgz \
-            oci://ghcr.io/${{ github.repository_owner }}
+            oci://ghcr.io/${{ github.repository }}
