@@ -24,6 +24,13 @@ server:
   # -- Environment mode: "production" or "development"
   # production: session cookies require HTTPS, stricter security headers
   environment: "production"
+  # -- TLS / HTTPS (optional). When both certFile and keyFile are set,
+  # AuthGate serves HTTPS on server.addr. Mount the PEM files into the pod via
+  # extraVolumes/extraVolumeMounts and point these paths at the mounted location.
+  # Remember to update server.baseUrl to https://... when enabling TLS.
+  tls:
+    certFile: ""
+    keyFile: ""
 
 # ============================================================
 # Database Configuration
@@ -152,6 +159,11 @@ rateLimit:
   token: 20
   deviceVerify: 10
   introspect: 20
+  # -- Burst sizes (requests per minute). Ignored when store=redis.
+  loginBurst: 2
+  deviceCodeBurst: 3
+  tokenBurst: 5
+  deviceVerifyBurst: 3
 
 # ============================================================
 # Audit Logging
@@ -212,6 +224,13 @@ cache:
     type: "memory"
     ttl: "1h"
     clientTTL: "10m"
+    sizePerConn: 32
+  # -- OAuth client lookup cache (queried on every OAuth flow).
+  # Mutations (create/update/delete/approve/reject/secret regen) invalidate immediately.
+  client:
+    type: "memory"
+    ttl: "5m"
+    clientTTL: "30s"
     sizePerConn: 32
 
 # ============================================================

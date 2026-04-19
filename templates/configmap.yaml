@@ -9,6 +9,10 @@ data:
   SERVER_ADDR: {{ .Values.server.addr | quote }}
   BASE_URL: {{ .Values.server.baseUrl | quote }}
   ENVIRONMENT: {{ .Values.server.environment | quote }}
+  {{- if and .Values.server.tls.certFile .Values.server.tls.keyFile }}
+  TLS_CERT_FILE: {{ .Values.server.tls.certFile | quote }}
+  TLS_KEY_FILE: {{ .Values.server.tls.keyFile | quote }}
+  {{- end }}
 
   # Database
   DATABASE_DRIVER: {{ .Values.database.driver | quote }}
@@ -60,9 +64,13 @@ data:
   RATE_LIMIT_STORE: {{ .Values.rateLimit.store | quote }}
   RATE_LIMIT_CLEANUP_INTERVAL: {{ .Values.rateLimit.cleanupInterval | quote }}
   LOGIN_RATE_LIMIT: {{ .Values.rateLimit.login | quote }}
+  LOGIN_RATE_LIMIT_BURST: {{ .Values.rateLimit.loginBurst | quote }}
   DEVICE_CODE_RATE_LIMIT: {{ .Values.rateLimit.deviceCode | quote }}
+  DEVICE_CODE_RATE_LIMIT_BURST: {{ .Values.rateLimit.deviceCodeBurst | quote }}
   TOKEN_RATE_LIMIT: {{ .Values.rateLimit.token | quote }}
+  TOKEN_RATE_LIMIT_BURST: {{ .Values.rateLimit.tokenBurst | quote }}
   DEVICE_VERIFY_RATE_LIMIT: {{ .Values.rateLimit.deviceVerify | quote }}
+  DEVICE_VERIFY_RATE_LIMIT_BURST: {{ .Values.rateLimit.deviceVerifyBurst | quote }}
   INTROSPECT_RATE_LIMIT: {{ .Values.rateLimit.introspect | quote }}
 
   # Redis
@@ -111,6 +119,12 @@ data:
   CLIENT_COUNT_CACHE_TTL: {{ .Values.cache.clientCount.ttl | quote }}
   CLIENT_COUNT_CACHE_CLIENT_TTL: {{ .Values.cache.clientCount.clientTTL | quote }}
   CLIENT_COUNT_CACHE_SIZE_PER_CONN: {{ .Values.cache.clientCount.sizePerConn | quote }}
+
+  # Client Cache (OAuth client lookups by client_id)
+  CLIENT_CACHE_TYPE: {{ .Values.cache.client.type | quote }}
+  CLIENT_CACHE_TTL: {{ .Values.cache.client.ttl | quote }}
+  CLIENT_CACHE_CLIENT_TTL: {{ .Values.cache.client.clientTTL | quote }}
+  CLIENT_CACHE_SIZE_PER_CONN: {{ .Values.cache.client.sizePerConn | quote }}
 
   # OAuth Providers
   OAUTH_AUTO_REGISTER: {{ .Values.oauth.autoRegister | quote }}
