@@ -224,13 +224,14 @@ secrets:
 
 The Secret must contain these keys:
 
-| Key                      | Required                  | Description                  |
-| ------------------------ | ------------------------- | ---------------------------- |
-| `JWT_SECRET`             | Yes                       | JWT signing secret           |
-| `SESSION_SECRET`         | Yes                       | Session encryption secret    |
-| `DATABASE_DSN`           | When using postgres       | PostgreSQL connection string |
-| `REDIS_PASSWORD`         | When using external Redis | Redis password               |
-| `DEFAULT_ADMIN_PASSWORD` | No                        | Admin user password          |
+| Key                      | Required                  | Description                            |
+| ------------------------ | ------------------------- | -------------------------------------- |
+| `JWT_SECRET`             | Yes (HS256)               | JWT signing secret                     |
+| `JWT_PRIVATE_KEY_PEM`    | When using RS256/ES256    | Inline PEM private key for JWT signing |
+| `SESSION_SECRET`         | Yes                       | Session encryption secret              |
+| `DATABASE_DSN`           | When using postgres       | PostgreSQL connection string           |
+| `REDIS_PASSWORD`         | When using external Redis | Redis password                         |
+| `DEFAULT_ADMIN_PASSWORD` | No                        | Admin user password                    |
 
 ## Testing Locally with colima (macOS)
 
