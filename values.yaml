@@ -126,14 +126,21 @@ redis:
 jwt:
   # -- Signing algorithm: HS256 (default), RS256, or ES256
   signingAlgorithm: "HS256"
-  # -- Path to PEM private key (required for RS256/ES256)
+  # -- Path to PEM private key (required for RS256/ES256 when privateKeyPem is empty)
   privateKeyPath: ""
+  # -- Inline PEM private key content (alternative to privateKeyPath). Takes
+  # precedence over privateKeyPath when both are set. Stored in the Kubernetes
+  # Secret; use with External Secrets Operator for production.
+  privateKeyPem: ""
   # -- Optional kid header value
   keyId: ""
   # -- Access token lifetime
   expiration: "10h"
   # -- Random jitter to prevent thundering herd
   expirationJitter: "30m"
+  # -- Hard cap on any token profile's access TTL. Startup fails if a profile
+  # exceeds this limit.
+  maxExpiration: "24h"
 
 # ============================================================
 # Session Configuration
@@ -296,6 +303,29 @@ refreshToken:
   enabled: true
   rotation: false
   expiration: "720h"
+  # -- Hard cap on any token profile's refresh TTL (default: 2160h / 90 days).
+  # Startup fails if a profile exceeds this limit.
+  maxExpiration: "2160h"
+
+# ============================================================
+# Token Profiles — per-OAuthApplication TTL presets
+# ============================================================
+# Each OAuth client selects one profile (short / standard / long) via the admin
+# UI; tokens issued for that client use the preset's access & refresh TTLs.
+# The "standard" profile inherits jwt.expiration / refreshToken.expiration by
+# default when access/refresh are left empty.
+tokenProfiles:
+  short:
+    accessTTL: "15m"
+    refreshTTL: "24h"
+  standard:
+    # -- Leave empty to inherit jwt.expiration
+    accessTTL: ""
+    # -- Leave empty to inherit refreshToken.expiration
+    refreshTTL: ""
+  long:
+    accessTTL: "24h"
+    refreshTTL: "2160h"
 
 # ============================================================
 # Client Credentials Flow (RFC 6749 §4.4)

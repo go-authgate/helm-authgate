@@ -37,6 +37,7 @@ data:
   {{- end }}
   JWT_EXPIRATION: {{ .Values.jwt.expiration | quote }}
   JWT_EXPIRATION_JITTER: {{ .Values.jwt.expirationJitter | quote }}
+  JWT_EXPIRATION_MAX: {{ .Values.jwt.maxExpiration | quote }}
 
   # Session
   SESSION_MAX_AGE: {{ .Values.session.maxAge | quote }}
@@ -166,6 +167,15 @@ data:
   ENABLE_REFRESH_TOKENS: {{ .Values.refreshToken.enabled | quote }}
   ENABLE_TOKEN_ROTATION: {{ .Values.refreshToken.rotation | quote }}
   REFRESH_TOKEN_EXPIRATION: {{ .Values.refreshToken.expiration | quote }}
+  REFRESH_TOKEN_EXPIRATION_MAX: {{ .Values.refreshToken.maxExpiration | quote }}
+
+  # Token Profiles (standard inherits jwt.expiration / refreshToken.expiration when unset)
+  TOKEN_PROFILE_SHORT_ACCESS_TTL: {{ .Values.tokenProfiles.short.accessTTL | quote }}
+  TOKEN_PROFILE_SHORT_REFRESH_TTL: {{ .Values.tokenProfiles.short.refreshTTL | quote }}
+  TOKEN_PROFILE_STANDARD_ACCESS_TTL: {{ .Values.tokenProfiles.standard.accessTTL | default .Values.jwt.expiration | quote }}
+  TOKEN_PROFILE_STANDARD_REFRESH_TTL: {{ .Values.tokenProfiles.standard.refreshTTL | default .Values.refreshToken.expiration | quote }}
+  TOKEN_PROFILE_LONG_ACCESS_TTL: {{ .Values.tokenProfiles.long.accessTTL | quote }}
+  TOKEN_PROFILE_LONG_REFRESH_TTL: {{ .Values.tokenProfiles.long.refreshTTL | quote }}
 
   # Client Credentials Flow
   CLIENT_CREDENTIALS_TOKEN_EXPIRATION: {{ .Values.clientCredentials.tokenExpiration | quote }}
